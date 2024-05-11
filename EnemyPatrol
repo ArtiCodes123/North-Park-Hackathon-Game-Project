@@ -1,0 +1,49 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class EnemyPatrol : MonoBehaviour
+{
+    public Vector3[] waypoints;
+    public float moveSpeed = 2f;
+    public Animator DroneAnimator;
+
+    private int currentWaypointIndex = 0;
+
+    void Update()
+    {
+        Patrol();
+    }
+
+    void Patrol()
+    {
+        if (waypoints.Length == 0)
+        {
+            Debug.LogError("No waypoints assigned to the enemy patrol!");
+            return;
+        }
+        Vector2 direction = (waypoints[currentWaypointIndex] - transform.position).normalized;
+        transform.Translate(direction * moveSpeed * Time.deltaTime);
+        if (Vector2.Distance(transform.position, waypoints[currentWaypointIndex]) < 0.1f)
+        {
+            currentWaypointIndex = (currentWaypointIndex + 1) % waypoints.Length;
+        }
+
+    }
+    private void OnCollisionEnter2D(Collision2D col) {
+        if(col.gameObject.tag == "Bullet")
+        {
+            DroneAnimator.SetTrigger("Explod");
+            Destroy(col.gameObject);
+            Destroy(gameObject, 1);
+        }
+
+        if(col.gameObject.name == "Player")
+        {
+            string scene = SceneManager.GetActiveScene().name;
+            SceneManager.LoadScene(scene);
+        }
+    }
+
+}
