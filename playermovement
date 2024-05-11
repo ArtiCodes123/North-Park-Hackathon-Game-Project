@@ -1,0 +1,76 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class playerMovement : MonoBehaviour
+{
+    public GameObject bulletPrefab;
+    public Animator animator;
+    public float playerSpeed = 5f;
+    public float jumpForce = 5f;
+    public bool lookingLeft = false;
+
+    private Rigidbody2D rb;
+    private float shootDelay = 0;
+    // Start is called before the first frame update
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
+
+    // Update is called once per frame  
+    void Update()
+    {
+        shootDelay += Time.deltaTime;
+        int layerMask = 1 << 6;
+        layerMask = ~layerMask;
+        bool GroundCheck = Physics2D.Raycast(transform.position, Vector2.down, 0.6f, layerMask);
+        if(Input.GetKeyDown("w") && GroundCheck)
+        {
+            GetComponent<Rigidbody2D>().velocity += new Vector2(0, jumpForce);
+        }
+        if(Input.GetAxis("Horizontal") != 0)
+        {
+            animator.SetFloat("Running", 1f);
+            if(Input.GetAxis("Horizontal") < 0)
+            {
+                lookingLeft = true;
+            } else if(Input.GetAxis("Horizontal") > 0)
+            {
+                lookingLeft = false;
+            }
+        } else {
+            animator.SetFloat("Running", 0f);
+        }
+        if(lookingLeft)
+        {
+            transform.localRotation = Quaternion.Euler(0, 180, 0);
+        } else {
+            transform.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+        if(Input.GetKeyDown("space") && shootDelay >= 0.6f)
+        {
+            shootDelay = 0;
+            animator.SetTrigger("Shoot");
+            if(lookingLeft)
+            {
+                GameObject bullet = Instantiate(bulletPrefab, transform.position + new Vector3(-0.5f, 0f, 0f), Quaternion.identity);
+                bullet.GetComponent<Rigidbody2D>().velocity = new Vector2(-6, 0);
+                bullet.gameObject.transform.localRotation= Quaternion.Euler(0, 180, 0);
+                Destroy(bullet, 4);
+
+            } else {
+                GameObject bullet = Instantiate(bulletPrefab, transform.position + new Vector3(0.5f, 0f, 0f), Quaternion.identity);
+                bullet.GetComponent<Rigidbody2D>().velocity = new Vector2(6, 0);
+                Destroy(bullet, 4);
+            }
+        }
+    }
+
+    void FixedUpdate()
+    {
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float movement = horizontalInput * playerSpeed * Time.deltaTime;
+        transform.position += new Vector3(movement, 0, 0);
+    }
+}
